@@ -1,0 +1,38 @@
+{
+  "created": "2026-11-08T12:51:36",
+  "hostname": "MacBook-Air-10.local",
+  "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+  "processor": "arm",
+  "cpu_count_logical": 8,
+  "python": "3.13.5",
+  "cmd": "./build/pi {n}",
+  "threads": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "set": {
+    "n": [
+      "900000000"
+    ]
+  },
+  "env_sweep": {},
+  "repeat": 5,
+  "warmup": 1,
+  "omp_env": {},
+  "argv": [
+    "../tools/bench.py",
+    "--cmd",
+    "./build/pi {n}",
+    "--threads",
+    "1,2,4,8,16",
+    "--set",
+    "n=900000000",
+    "--repeat",
+    "5",
+    "--out",
+    "results/pi.csv"
+  ]
+}
