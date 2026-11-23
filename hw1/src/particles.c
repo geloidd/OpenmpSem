@@ -84,45 +84,37 @@ static double forces_seq(int n, int lj, const double *x, const double *y, const 
     return e;
 }
 
-/* TODO: полный цикл, без третьего закона Ньютона */
 static double forces_full(int n, int lj, const double *x, const double *y, const double *z,
                           const double *q, double *fx, double *fy, double *fz)
 {
     double e = 0.0;
     #pragma omp parallel for shared(fx, fy, fz, x, y, z, lj, n, q) schedule(runtime) default(none) reduction(+:e)
-    for (int i = 0; i < n; i ++) {
-        double fx_loc=0.0, fy_loc=0.0, fz_loc = 0.0;
-        for (int j = 0; j < n; j ++) {
-            if (i ==j)
+    for (int i = 0; i < n; i++) {
+        double fx_loc = 0.0, fy_loc = 0.0, fz_loc = 0.0;
+        for (int j = 0; j < n; j++) {
+            if (i == j)
                 continue;
-            fx[i] = fy[i] = fz[i] = 0.0;
-            
             double dx = x[i] - x[j], dy = y[i] - y[j], dz = z[i] - z[j], c;
             e += pair(lj, q[i], q[j], dx * dx + dy * dy + dz * dz, &c);
-            fx_loc += c * dx; 
-            fy_loc += c * dy; 
+            fx_loc += c * dx;
+            fy_loc += c * dy;
             fz_loc += c * dz;
-
-            // fx_loc -= c * dx; 
-            // fy_loc -= c * dy; 
-            // fz_loc -= c * dz;
-
         }
         fx[i] = fx_loc;
         fy[i] = fy_loc;
         fz[i] = fz_loc;
-
     }
 
-    return e/2.0;
+    return e / 2.0;
 }
 
-/* TODO: треугольный цикл, без гонок */
+/* треугольный цикл, без гонок */
 static double forces_tri(int n, int lj, const double *x, const double *y, const double *z,
-                         const double *q, double *fx, double *fy, double *fz)       
+                         const double *q, double *fx, double *fy, double *fz)
 {
-    double e =0.0;
-    #pragma omp parallel for default(none) schedule(runtime) shared(n, lj, x, y, z, q), reduction(+:e, fx[:n], fy[:n], fz[:n])
+    double e = 0.0;
+    for (int i = 0; i < n; i++) fx[i] = fy[i] = fz[i] = 0.0;
+    #pragma omp parallel for default(none) schedule(runtime) shared(n, lj, x, y, z, q) reduction(+:e, fx[:n], fy[:n], fz[:n])
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
             double dx = x[i] - x[j];
@@ -194,3 +186,6 @@ int main(int argc, char **argv)
     free(x); free(y); free(z); free(q); free(fx); free(fy); free(fz);
     return 0;
 }
+
+
+
