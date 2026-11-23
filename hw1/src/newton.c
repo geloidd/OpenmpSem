@@ -104,8 +104,8 @@ static long basins_par(variant_t p, int nx, int ny, signed char *root, unsigned 
     #pragma omp parallel default(none) shared(p, nx, ny, root, iters, stderr) reduction(+:total)
     {
         double t_start = omp_get_wtime();
-        #pragma omp for schedule(runtime) collapse(2) nowait
-        // #pragma omp for schedule(runtime) nowait
+        // #pragma omp for schedule(runtime) collapse(2) nowait
+        #pragma omp for schedule(runtime) nowait
         for (int j = 0; j < ny; j++)
             for (int i = 0; i < nx; i++) {
                 double x = p.cx - p.w + 2.0 * p.w * (i + 0.5) / nx;
