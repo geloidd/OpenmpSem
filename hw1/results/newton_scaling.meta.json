@@ -1,0 +1,44 @@
+{
+  "created": "2026-11-22T19:44:31",
+  "hostname": "MacBook-Air-10.local",
+  "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+  "processor": "arm",
+  "cpu_count_logical": 8,
+  "python": "3.13.5",
+  "cmd": "./build/newton 4 {nx} {nx} par",
+  "threads": [
+    1,
+    2,
+    4,
+    8
+  ],
+  "set": {
+    "nx": [
+      "2000"
+    ]
+  },
+  "env_sweep": {
+    "OMP_SCHEDULE": [
+      "static",
+      "dynamic,16"
+    ]
+  },
+  "repeat": 5,
+  "warmup": 1,
+  "omp_env": {},
+  "argv": [
+    "../tools/bench.py",
+    "--cmd",
+    "./build/newton 4 {nx} {nx} par",
+    "--threads",
+    "1,2,4,8",
+    "--set",
+    "nx=2000",
+    "--env",
+    "OMP_SCHEDULE=static;dynamic,16",
+    "--repeat",
+    "5",
+    "--out",
+    "results/newton_scaling.csv"
+  ]
+}

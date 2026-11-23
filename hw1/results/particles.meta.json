@@ -1,0 +1,46 @@
+{
+  "created": "2026-11-22T19:46:17",
+  "hostname": "MacBook-Air-10.local",
+  "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+  "processor": "arm",
+  "cpu_count_logical": 8,
+  "python": "3.13.5",
+  "cmd": "./build/particles 4 {mode}",
+  "threads": [
+    1,
+    2,
+    4,
+    8
+  ],
+  "set": {
+    "mode": [
+      "full",
+      "tri"
+    ]
+  },
+  "env_sweep": {
+    "OMP_SCHEDULE": [
+      "static",
+      "dynamic,16",
+      "guided"
+    ]
+  },
+  "repeat": 5,
+  "warmup": 1,
+  "omp_env": {},
+  "argv": [
+    "../tools/bench.py",
+    "--cmd",
+    "./build/particles 4 {mode}",
+    "--threads",
+    "1,2,4,8",
+    "--set",
+    "mode=full,tri",
+    "--env",
+    "OMP_SCHEDULE=static;dynamic,16;guided",
+    "--repeat",
+    "5",
+    "--out",
+    "results/particles.csv"
+  ]
+}
