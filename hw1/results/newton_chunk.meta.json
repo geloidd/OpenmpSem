@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-22T19:44:05",
+  "created": "2026-11-27T17:16:24",
   "hostname": "MacBook-Air-10.local",
   "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
   "processor": "arm",
@@ -7,7 +7,7 @@
   "python": "3.13.5",
   "cmd": "./build/newton 4 {nx} {nx} par",
   "threads": [
-    8
+    16
   ],
   "set": {
     "nx": [
@@ -32,7 +32,7 @@
     "--cmd",
     "./build/newton 4 {nx} {nx} par",
     "--threads",
-    "8",
+    "16",
     "--set",
     "nx=2000",
     "--env",

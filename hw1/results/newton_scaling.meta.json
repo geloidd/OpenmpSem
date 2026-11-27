@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-22T19:44:31",
+  "created": "2026-11-27T17:17:00",
   "hostname": "MacBook-Air-10.local",
   "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
   "processor": "arm",
@@ -10,7 +10,10 @@
     1,
     2,
     4,
-    8
+    6,
+    8,
+    12,
+    16
   ],
   "set": {
     "nx": [
@@ -20,7 +23,7 @@
   "env_sweep": {
     "OMP_SCHEDULE": [
       "static",
-      "dynamic,16"
+      "guided"
     ]
   },
   "repeat": 5,
@@ -31,11 +34,11 @@
     "--cmd",
     "./build/newton 4 {nx} {nx} par",
     "--threads",
-    "1,2,4,8",
+    "1,2,4,6,8,12,16",
     "--set",
     "nx=2000",
     "--env",
-    "OMP_SCHEDULE=static;dynamic,16",
+    "OMP_SCHEDULE=static;guided",
     "--repeat",
     "5",
     "--out",
