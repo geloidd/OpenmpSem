@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T17:17:00",
+  "created": "2026-11-28T00:12:42",
   "hostname": "MacBook-Air-10.local",
   "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
   "processor": "arm",
@@ -23,7 +23,7 @@
   "env_sweep": {
     "OMP_SCHEDULE": [
       "static",
-      "guided"
+      "dynamic,16"
     ]
   },
   "repeat": 5,
@@ -38,7 +38,7 @@
     "--set",
     "nx=2000",
     "--env",
-    "OMP_SCHEDULE=static;guided",
+    "OMP_SCHEDULE=static;dynamic,16",
     "--repeat",
     "5",
     "--out",
