@@ -16,7 +16,7 @@ SCHEDS ?= static;static,1;static,16;dynamic,1;dynamic,16;dynamic,256;guided
 MAXT    = $(lastword $(subst $(comma), ,$(THREADS)))
 comma  := ,
 
-PROGS := newton particles
+PROGS := newton_2 particles
 
 all: $(foreach p,$(PROGS),build/$(p)$(EXE))
 
