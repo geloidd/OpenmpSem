@@ -84,38 +84,48 @@ static double forces_seq(int n, int lj, const double *x, const double *y, const 
     return e;
 }
 
-static double forces_full(int n, int lj, const double *x, const double *y, const double *z,
-                          const double *q, double *fx, double *fy, double *fz)
+static double sum_row_energy(int n, const double *row_energy) // задаем порядок сложения, чтобы не было неассоциативности сложения
 {
-    double e = 0.0;
-    #pragma omp parallel for shared(fx, fy, fz, x, y, z, lj, n, q) schedule(runtime) default(none) reduction(+:e)
-    for (int i = 0; i < n; i++) {
-        double fx_loc = 0.0, fy_loc = 0.0, fz_loc = 0.0;
-        for (int j = 0; j < n; j++) {
-            if (i == j)
+    double total = 0.0;
+    for (int i = 0; i < n; i++) total += row_energy[i];
+    return total;
+}
+
+/* полный цикл, без третьего закона Ньютона */
+static double forces_full(int n, int lj, const double *x, const double *y, const double *z,
+                          const double *q, double *fx, double *fy, double *fz, double *row_energy)
+{
+    #pragma omp parallel for shared(fx, fy, fz, x, y, z, lj, n, q, row_energy) schedule(runtime) default(none)
+    for (int i = 0; i < n; i ++) {
+        double e = 0.0;
+        double fx_loc=0.0, fy_loc=0.0, fz_loc = 0.0;
+        for (int j = 0; j < n; j ++) {
+            if (i ==j)
                 continue;
             double dx = x[i] - x[j], dy = y[i] - y[j], dz = z[i] - z[j], c;
             e += pair(lj, q[i], q[j], dx * dx + dy * dy + dz * dz, &c);
-            fx_loc += c * dx;
-            fy_loc += c * dy;
+            fx_loc += c * dx; 
+            fy_loc += c * dy; 
             fz_loc += c * dz;
         }
+        row_energy[i] = e;
         fx[i] = fx_loc;
         fy[i] = fy_loc;
         fz[i] = fz_loc;
+
     }
 
-    return e / 2.0;
+    return sum_row_energy(n, row_energy) / 2.0;
 }
 
 /* треугольный цикл, без гонок */
 static double forces_tri(int n, int lj, const double *x, const double *y, const double *z,
-                         const double *q, double *fx, double *fy, double *fz)
+                         const double *q, double *fx, double *fy, double *fz, double *row_energy)       
 {
-    double e = 0.0;
     for (int i = 0; i < n; i++) fx[i] = fy[i] = fz[i] = 0.0;
-    #pragma omp parallel for default(none) schedule(runtime) shared(n, lj, x, y, z, q) reduction(+:e, fx[:n], fy[:n], fz[:n])
+    #pragma omp parallel for default(none) schedule(runtime) shared(n, lj, x, y, z, q, row_energy) reduction(+:fx[:n], fy[:n], fz[:n])
     for (int i = 0; i < n; i++) {
+        double e = 0.0;
         for (int j = i + 1; j < n; j++) {
             double dx = x[i] - x[j];
             double dy = y[i] - y[j];
@@ -131,8 +141,9 @@ static double forces_tri(int n, int lj, const double *x, const double *y, const 
             fy[j] -= c * dy;
             fz[j] -= c * dz;
         }
+        row_energy[i] = e;
     }
-    return e;
+    return sum_row_energy(n, row_energy);
 }
 
 int main(int argc, char **argv)
@@ -153,13 +164,15 @@ int main(int argc, char **argv)
     double *x = malloc(n * sizeof *x), *y = malloc(n * sizeof *y), *z = malloc(n * sizeof *z);
     double *q = malloc(n * sizeof *q);
     double *fx = malloc(n * sizeof *fx), *fy = malloc(n * sizeof *fy), *fz = malloc(n * sizeof *fz);
+    double *row_energy = malloc(n * sizeof *row_energy);
+    if (!row_energy) { fprintf(stderr, "мало памяти\n"); return 1; }
     make_system(V, p, n, x, y, z, q);
 
     if (strncmp(mode, "check-", 6) == 0) {
         double *gx = malloc(n * sizeof *gx), *gy = malloc(n * sizeof *gy), *gz = malloc(n * sizeof *gz);
         double e1 = forces_seq(n, p.lj, x, y, z, q, fx, fy, fz), e2;
-        if (strcmp(mode + 6, "full") == 0) e2 = forces_full(n, p.lj, x, y, z, q, gx, gy, gz);
-        else                               e2 = forces_tri (n, p.lj, x, y, z, q, gx, gy, gz);
+        if (strcmp(mode + 6, "full") == 0) e2 = forces_full(n, p.lj, x, y, z, q, gx, gy, gz, row_energy);
+        else                               e2 = forces_tri (n, p.lj, x, y, z, q, gx, gy, gz, row_energy);
         double fmaxv = 0.0, dmax = 0.0;
         for (int i = 0; i < n; i++) {
             fmaxv = fmax(fmaxv, fmax(fabs(fx[i]), fmax(fabs(fy[i]), fabs(fz[i]))));
@@ -174,8 +187,8 @@ int main(int argc, char **argv)
 
     double t0 = omp_get_wtime(), e;
     if      (strcmp(mode, "seq")  == 0) e = forces_seq (n, p.lj, x, y, z, q, fx, fy, fz);
-    else if (strcmp(mode, "full") == 0) e = forces_full(n, p.lj, x, y, z, q, fx, fy, fz);
-    else if (strcmp(mode, "tri")  == 0) e = forces_tri (n, p.lj, x, y, z, q, fx, fy, fz);
+    else if (strcmp(mode, "full") == 0) e = forces_full(n, p.lj, x, y, z, q, fx, fy, fz, row_energy);
+    else if (strcmp(mode, "tri")  == 0) e = forces_tri (n, p.lj, x, y, z, q, fx, fy, fz, row_energy);
     else { fprintf(stderr, "режим: seq | full | tri\n"); return 1; }
     double t = omp_get_wtime() - t0;
 
@@ -183,9 +196,6 @@ int main(int argc, char **argv)
     for (int i = 0; i < n; i++) fn += fx[i] * fx[i] + fy[i] * fy[i] + fz[i] * fz[i];
     printf("V=%d N=%d %s, потоков %d, E/N = %.10f\n", V, n, mode, omp_get_max_threads(), e / n);
     printf("RESULT %.15e\nFNORM %.15e\nTIME %.6f\n", e, sqrt(fn), t);
-    free(x); free(y); free(z); free(q); free(fx); free(fy); free(fz);
+    free(x); free(y); free(z); free(q); free(row_energy); free(fx); free(fy); free(fz);
     return 0;
 }
-
-
-
